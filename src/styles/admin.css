@@ -1,0 +1,58 @@
+.admin-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 28px;
+    border-bottom: 1px solid var(--line);
+}
+.admin-tabs button {
+    padding: 10px 18px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+}
+.admin-tabs button.active {
+    color: var(--ink);
+    border-bottom-color: var(--magenta);
+}
+
+.admin-grid {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 32px;
+    align-items: start;
+}
+
+.admin-form {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: 0 10px 30px rgba(43, 27, 77, 0.08);
+}
+
+.admin-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.admin-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--card);
+    border-radius: 10px;
+    padding: 14px 18px;
+}
+.admin-row-sku { font-size: 0.72rem; color: var(--muted); }
+.admin-row-right { display: flex; align-items: center; gap: 14px; }
+.admin-row-right select {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 5px 8px;
+    font-size: 0.78rem;
+}
+
+@media (max-width: 860px) {
+    .admin-grid { grid-template-columns: 1fr; }
+}

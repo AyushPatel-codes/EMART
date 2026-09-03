@@ -1,0 +1,52 @@
+.home-hero {
+    background: linear-gradient(100deg, var(--marigold), var(--rose) 60%, var(--violet));
+    padding: 34px 0;
+    color: #fff;
+}
+.home-hero-eyebrow {
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    opacity: 0.9;
+}
+.home-hero-title {
+    font-size: clamp(1.7rem, 4vw, 2.6rem);
+    margin: 8px 0 0;
+}
+
+.home-section { padding: 36px 0 10px; }
+.home-section-title { font-size: 1.4rem; margin-bottom: 18px; }
+.home-empty-note { color: var(--muted); }
+
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 16px;
+}
+
+.cat-card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 20px 10px;
+    text-align: center;
+}
+.cat-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 10px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+}
+.cat-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 18px;
+}

@@ -1,0 +1,28 @@
+.order-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.order-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--card);
+    border-radius: 12px;
+    padding: 16px 20px;
+    border-left: 5px solid var(--sunshine);
+}
+
+.order-id { font-weight: 700; margin-right: 12px; }
+.order-status {
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: rgba(0, 169, 157, 0.14);
+    color: var(--turquoise);
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
+.order-amount { font-weight: 700; margin-right: 12px; }
+.order-date { font-size: 0.78rem; color: var(--muted); }

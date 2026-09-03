@@ -1,0 +1,59 @@
+.prod-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+}
+
+.prod-img-wrap { position: relative; }
+.prod-img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 10px;
+    object-fit: cover;
+    display: block;
+}
+.prod-img-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.4rem;
+}
+
+.prod-sold-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 20px;
+    color: #fff;
+    background: var(--turquoise);
+}
+
+.prod-name {
+    font-size: 0.96rem;
+    margin: 12px 0 4px;
+}
+
+.prod-rating {
+    font-size: 0.75rem;
+    color: #b8860b;
+}
+.prod-rating-num { color: var(--muted); }
+
+.prod-price {
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin: 8px 0 12px;
+}
+
+.prod-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+}
+.prod-actions .btn { flex: 1; }
