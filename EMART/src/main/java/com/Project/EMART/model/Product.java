@@ -7,8 +7,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.math.BigDecimal;
-import java.util.List;
+import java.util.Date;
 
 @Data
 @NoArgsConstructor
@@ -19,9 +18,25 @@ public class Product {
     private String id;
     private String name;
     private String description;
-    private BigDecimal price;
+    private double price;
     private int stock;
     private String category;
-    private List<String> images;
+    private String images;
+    private String adminId;
     private double rating;
+    private Date createdAt;
+    private Date updatedAt;
+
+    public Product(String name, String description, double price, int stock,
+                   String category, String images, String adminId) {
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.stock = stock;
+        this.category = category;
+        this.images = images;
+        this.adminId = adminId;
+        this.createdAt = new Date();
+        this.updatedAt = new Date();
+    }
 }
