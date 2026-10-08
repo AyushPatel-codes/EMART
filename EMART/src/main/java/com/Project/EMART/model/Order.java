@@ -1,28 +1,24 @@
 package com.Project.EMART.model;
 
-import lombok.Data;
+import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
-@Data
-@Document(collection = "orders")
+@Document("orders")
+@Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class Order {
-
-    @Id
-    private String id;
-
-    private String userId;
-
-    private List<Cart.CartItem> items;
-
+    @Id private String id;
+    @Indexed private String customerId;
+    private String customerName;
+    private List<OrderItem> items;
+    private Address shippingAddress;
     private double totalAmount;
-
-    private String status; // PENDING, PAID, SHIPPED, DELIVERED
-
-    private Date orderDate = new Date();
-
-    private String paymentId;
+    private PaymentMethod paymentMethod;
+    private PaymentStatus paymentStatus;
+    private OrderStatus orderStatus;  // derived from item statuses
+    @Indexed private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

@@ -1,10 +1,10 @@
 package com.Project.EMART.repository;
 
-import com.Project.EMART.model.Cart;
+import com.Project.EMART.model.Wishlist;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import java.util.Optional;
 
-public interface CartRepository extends MongoRepository<Cart, String> {
-    Optional<Cart> findByCustomerId(String customerId);
+public interface WishlistRepository extends MongoRepository<Wishlist, String> {
+    Optional<Wishlist> findByCustomerId(String customerId);
     void deleteByCustomerId(String customerId);
 }

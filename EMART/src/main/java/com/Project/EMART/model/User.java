@@ -1,6 +1,5 @@
 package com.Project.EMART.model;
 
-import jakarta.mail.Address;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;

@@ -4,11 +4,13 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
-@Document("categories")
+@Document("wishlists")
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
-public class Category {
+public class Wishlist {
     @Id private String id;
-    @Indexed(unique = true) private String name;
-    private String description;
+    @Indexed(unique = true) private String customerId;
+    @Builder.Default private Set<String> productIds = new LinkedHashSet<>();
 }

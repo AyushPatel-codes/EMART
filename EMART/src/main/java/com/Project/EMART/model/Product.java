@@ -1,42 +1,30 @@
 package com.Project.EMART.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+import java.time.LocalDateTime;
+import java.util.List;
 
-import java.util.Date;
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Document(collection = "products" )//tell database to save it in products collection
+@Document("products")
+@Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class Product {
-    @Id
-    private String id;
+    @Id private String id;
     private String name;
     private String description;
     private double price;
+    private double discount;      // percent 0-100
+    private double finalPrice;
+    @Indexed private String category;
+    private String brand;
+    private List<String> images;
     private int stock;
-    private String category;
-    private String images;
-    private String adminId;
+    @Indexed private String sellerId;
+    private String sellerName;
     private double rating;
-    private Date createdAt;
-    private Date updatedAt;
-
-    public Product(String name, String description, double price, int stock,
-                   String category, String images, String adminId) {
-        this.name = name;
-        this.description = description;
-        this.price = price;
-        this.stock = stock;
-        this.category = category;
-        this.images = images;
-        this.adminId = adminId;
-        this.createdAt = new Date();
-        this.updatedAt = new Date();
-    }
+    private int reviewCount;
+    @Indexed private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private boolean active;
 }
