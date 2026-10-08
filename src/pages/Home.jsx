@@ -1,112 +1,49 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getProducts } from '../api/endpoints';
-import { CATEGORIES } from '../data/categories';
-import { useCart } from '../context/CartContext';
-import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
+import { catalogApi } from '../api/services';
+import { useFetch } from '../hooks';
 import ProductCard from '../components/ProductCard';
-import '../styles/home.css';
+import { ErrorBox, Loader } from '../components/Feedback';
+
+const Section = ({ title, products, link }) => !products?.length ? null : (
+  <section className="container section">
+    <div className="section-head"><h2>{title}</h2>{link && <Link to={link}>See all →</Link>}</div>
+    <div className="grid">{products.map((p) => <ProductCard key={p.id} product={p} />)}</div>
+  </section>
+);
 
 export default function Home() {
-    const [products, setProducts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const { addItem } = useCart();
-    const { isAuthenticated } = useAuth();
-    const navigate = useNavigate();
+  const { data, loading, error, reload } = useFetch(async () => {
+    const [cats, newest, trending, best] = await Promise.all([
+      catalogApi.categories(),
+      catalogApi.products({ sort: 'newest', size: 24 }),
+      catalogApi.products({ sort: 'rating', size: 8 }),
+      catalogApi.products({ sort: 'rating', rating: 4, size: 8 }),
+    ]);
+    return { cats, newest: newest.content, trending: trending.content, best: best.content };
+  }, []);
 
-    useEffect(() => {
-        getProducts()
-            .then((res) => setProducts(res.data))
-            .catch(() => setError('Could not load products. Is the backend running?'))
-            .finally(() => setLoading(false));
-    }, []);
-
-    const handleAddToCart = async (product) => {
-        if (!isAuthenticated) return navigate('/login');
-        try {
-            await addItem(product, 1);
-        } catch {
-            setError('Could not add to bag.');
-        }
-    };
-
-    const handleBuyNow = async (product) => {
-        if (!isAuthenticated) return navigate('/login');
-        try {
-            await addItem(product, 1);
-            navigate('/checkout');
-        } catch {
-            setError('Could not start checkout.');
-        }
-    };
-
-    // Best-selling / top-rated: uses soldCount / rating fields if the backend
-    // provides them; otherwise falls back to showing the first items so the
-    // sections aren't empty. See README for the optional fields to add.
-    const bestSelling = [...products]
-        .sort((a, b) => (b.soldCount || 0) - (a.soldCount || 0))
-        .slice(0, 4);
-    const topRated = [...products]
-        .sort((a, b) => (b.rating || 0) - (a.rating || 0))
-        .slice(0, 4);
-
-    return (
-        <div className="page">
-            <div className="home-hero">
-                <div className="container">
-                    <span className="mono home-hero-eyebrow">✦ Festival Sale · Free shipping over ₹999 ✦</span>
-                    <h1 className="home-hero-title">Shop the colours of India</h1>
-                </div>
-            </div>
-
-            <div className="container">
-                {error && <div className="error-banner" style={{ marginTop: 24 }}>{error}</div>}
-
-                <section className="home-section">
-                    <h2 className="home-section-title">Shop by Category</h2>
-                    <div className="category-grid">
-                        {CATEGORIES.map((c) => (
-                            <div key={c.id} className="cat-card" onClick={() => navigate(`/category/${c.id}`)}>
-                                <div className="cat-icon" style={{ background: `${c.color}22` }}>{c.icon}</div>
-                                <span className="cat-label">{c.label}</span>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-
-                {loading && <div className="loading-row">Fetching /api/products…</div>}
-
-                {!loading && (
-                    <>
-                        <section className="home-section">
-                            <h2 className="home-section-title">🔥 Best Selling</h2>
-                            {bestSelling.length === 0 ? (
-                                <p className="home-empty-note">No products yet — add some from the admin panel.</p>
-                            ) : (
-                                <div className="product-grid">
-                                    {bestSelling.map((p) => (
-                                        <ProductCard key={p.id} product={p} onAddToCart={handleAddToCart} onBuyNow={handleBuyNow} />
-                                    ))}
-                                </div>
-                            )}
-                        </section>
-
-                        <section className="home-section" style={{ paddingBottom: 60 }}>
-                            <h2 className="home-section-title">⭐ Top Rated</h2>
-                            {topRated.length === 0 ? (
-                                <p className="home-empty-note">No products yet.</p>
-                            ) : (
-                                <div className="product-grid">
-                                    {topRated.map((p) => (
-                                        <ProductCard key={p.id} product={p} onAddToCart={handleAddToCart} onBuyNow={handleBuyNow} />
-                                    ))}
-                                </div>
-                            )}
-                        </section>
-                    </>
-                )}
-            </div>
-        </div>
-    );
+  return (
+    <>
+      <div className="hero">
+        <h1>Everything you need, delivered.</h1>
+        <p>Shop thousands of products from trusted sellers. Great prices, fast delivery.</p>
+        <Link className="btn btn-primary" to="/products">Start shopping</Link>
+      </div>
+      {loading && <Loader />}
+      {error && <div className="container section"><ErrorBox message={error} onRetry={reload} /></div>}
+      {data && (
+        <>
+          <section className="container section">
+            <div className="section-head"><h2>Shop by category</h2></div>
+            <div className="cat-grid">{data.cats.map((c) => <Link key={c.id} className="cat-tile" to={`/category/${encodeURIComponent(c.name)}`}>{c.name}</Link>)}</div>
+          </section>
+          <Section title="Featured products" products={data.newest.slice(0, 8)} link="/products" />
+          <Section title="Trending now" products={data.trending} link="/products?sort=rating" />
+          <Section title="Best sellers (4★ & up)" products={data.best} link="/products?sort=rating&rating=4" />
+          <Section title="Deals of the day" products={data.newest.filter((p) => p.discount >= 10).slice(0, 8)} />
+          {!data.newest.length && <div className="container empty">No products yet. Approved sellers can list products from the Seller portal.</div>}
+        </>
+      )}
+    </>
+  );
 }

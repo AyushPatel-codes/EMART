@@ -1,86 +1,48 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { authApi } from '../api/services';
+import { errMsg, errFields } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import Field from '../components/Field';
+import { canAccess, homeFor, ROLES } from '../utils/format';
 
-export default function Login() {
-    const { login } = useAuth();
-    const navigate = useNavigate();
-    const [loginMode, setLoginMode] = useState('USER'); // 'USER' or 'ADMIN' — UI only
-    const [form, setForm] = useState({ email: '', password: '' });
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
+/** variant: 'customer' | 'seller' | 'admin' - same form, different endpoint/heading. */
+export default function Login({ variant = 'customer' }) {
+  const { user, login, logout } = useAuth();
+  const nav = useNavigate();
+  const loc = useLocation();
+  const [form, setForm] = useState({ email: '', password: '' });
+  const [err, setErr] = useState('');
+  const [fields, setFields] = useState({});
+  const [busy, setBusy] = useState(false);
+  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+  const titles = { customer: 'Sign in', seller: 'Seller sign in', admin: 'Admin sign in' };
 
-    const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  if (user) return <Navigate to={homeFor(user.role)} replace />;
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
-        setLoading(true);
-        try {
-            const userInfo = await login(form);
+  const submit = async (e) => {
+    e.preventDefault(); setErr(''); setFields({}); setBusy(true);
+    try {
+      const data = variant === 'admin' ? await authApi.adminLogin(form) : await authApi.login(form);
+      if (variant === 'seller' && data.role !== ROLES.SELLER) { setErr('This is not a seller account. Use the customer sign-in.'); setBusy(false); return; }
+      if (variant === 'customer' && data.role === ROLES.ADMIN) { setErr('Invalid email or password'); setBusy(false); return; }
+      const u = login(data);
+      const from = loc.state?.from?.pathname;
+      nav(from && canAccess(u.role, from) ? from : homeFor(u.role), { replace: true });
+    } catch (ex) { setErr(errMsg(ex)); setFields(errFields(ex)); setBusy(false); }
+  };
 
-            // Guard: if someone picked the Admin tab but their account isn't
-            // actually an admin, don't silently let them into the customer flow —
-            // tell them clearly instead.
-            if (loginMode === 'ADMIN' && userInfo.role !== 'ADMIN') {
-                setError('This account does not have admin access.');
-                setLoading(false);
-                return;
-            }
-
-            navigate(userInfo.role === 'ADMIN' ? '/admin' : '/');
-        } catch (err) {
-            setError(err.response?.data?.message || 'Invalid email or password.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className="page">
-            <div className="form-card">
-        <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--turquoise)', textTransform: 'uppercase', fontWeight: 700 }}>
-          Welcome back
-        </span>
-                <h2 style={{ margin: '8px 0 20px' }}>Sign in</h2>
-
-                <div className="login-mode-tabs">
-                    <button
-                        type="button"
-                        className={loginMode === 'USER' ? 'active' : ''}
-                        onClick={() => setLoginMode('USER')}
-                    >
-                        🛍️ Customer
-                    </button>
-                    <button
-                        type="button"
-                        className={loginMode === 'ADMIN' ? 'active' : ''}
-                        onClick={() => setLoginMode('ADMIN')}
-                    >
-                        🛠️ Admin
-                    </button>
-                </div>
-
-                {error && <div className="error-banner">{error}</div>}
-
-                <form onSubmit={handleSubmit}>
-                    <div className="field">
-                        <label>Email</label>
-                        <input type="email" name="email" required value={form.email} onChange={handleChange} placeholder="you@example.com" />
-                    </div>
-                    <div className="field">
-                        <label>Password</label>
-                        <input type="password" name="password" required value={form.password} onChange={handleChange} placeholder="••••••••" />
-                    </div>
-                    <button className="btn btn-pay btn-block" disabled={loading}>
-                        {loading ? 'Signing in…' : loginMode === 'ADMIN' ? 'Sign in to Admin' : 'Sign in'}
-                    </button>
-                </form>
-
-                <p style={{ marginTop: 20, fontSize: '0.85rem', color: 'var(--muted)' }}>
-                    New here? <Link to="/register" style={{ color: 'var(--magenta)', fontWeight: 600 }}>Create an account</Link>
-                </p>
-            </div>
-        </div>
-    );
+  return (
+    <div className="auth page">
+      <form className="card" onSubmit={submit}>
+        <h2>{titles[variant]}</h2>
+        {err && <div className="alert error">{err}</div>}
+        <Field label="Email" type="email" value={form.email} onChange={set('email')} error={fields.email} required autoComplete="username" />
+        <Field label="Password" type="password" value={form.password} onChange={set('password')} error={fields.password} required autoComplete="current-password" />
+        <button className="btn btn-primary btn-block" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
+        {variant === 'customer' && <p className="muted">New to Emart? <Link to="/register">Create an account</Link> · <Link to="/seller/login">Seller sign in</Link></p>}
+        {variant === 'seller' && <p className="muted">Want to sell on Emart? <Link to="/seller/register">Register as a seller</Link></p>}
+      </form>
+    </div>
+  );
 }

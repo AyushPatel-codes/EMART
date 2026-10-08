@@ -1,53 +1,33 @@
-import { createContext, useContext, useState, useCallback } from 'react';
-import { loginUser, registerUser } from '../api/endpoints';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { authApi } from '../api/services';
 
 const AuthContext = createContext(null);
+export const useAuth = () => useContext(AuthContext);
 
+/** NOTE: localStorage only remembers who is logged in for the UI. Every API call is re-authorised by the backend. */
 export function AuthProvider({ children }) {
-    const [user, setUser] = useState(() => {
-        const stored = localStorage.getItem('user');
-        return stored ? JSON.parse(stored) : null;
-    });
-    const [token, setToken] = useState(() => localStorage.getItem('token'));
+  const [user, setUser] = useState(() => { try { return JSON.parse(localStorage.getItem('emart_user')); } catch { return null; } });
 
-    const login = useCallback(async (credentials) => {
-        const res = await loginUser(credentials);
-        const jwt = res.data.token || res.data.jwt || res.data.accessToken;
-        const userInfo = res.data.user || {
-            email: credentials.email,
-            role: res.data.role || 'USER',
-            id: res.data.userId || res.data.id
-        };
-        if (jwt) {
-            localStorage.setItem('token', jwt);
-            setToken(jwt);
-        }
-        localStorage.setItem('user', JSON.stringify(userInfo));
-        setUser(userInfo);
-        return userInfo;
-    }, []);
+  const clear = useCallback(() => {
+    localStorage.removeItem('emart_token'); localStorage.removeItem('emart_user'); setUser(null);
+  }, []);
+  useEffect(() => {
+    window.addEventListener('emart:logout', clear);
+    return () => window.removeEventListener('emart:logout', clear);
+  }, [clear]);
 
-    const register = useCallback(async (payload) => {
-        const res = await registerUser(payload);
-        return res.data;
-    }, []);
+  const login = useCallback((data) => {
+    const u = { id: data.userId, name: data.name, email: data.email, role: data.role, status: data.status };
+    localStorage.setItem('emart_token', data.token);
+    localStorage.setItem('emart_user', JSON.stringify(u));
+    setUser(u);
+    return u;
+  }, []);
 
-    const logout = useCallback(() => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        setToken(null);
-        setUser(null);
-    }, []);
+  const logout = useCallback(async () => { try { await authApi.logout(); } catch { /* ignore */ } clear(); }, [clear]);
+  const patchUser = useCallback((patch) => setUser((u) => {
+    const n = { ...u, ...patch }; localStorage.setItem('emart_user', JSON.stringify(n)); return n;
+  }), []);
 
-    return (
-        <AuthContext.Provider value={{ user, token, login, register, logout, isAuthenticated: !!token }}>
-            {children}
-        </AuthContext.Provider>
-    );
-}
-
-export function useAuth() {
-    const ctx = useContext(AuthContext);
-    if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-    return ctx;
+  return <AuthContext.Provider value={{ user, login, logout, patchUser }}>{children}</AuthContext.Provider>;
 }

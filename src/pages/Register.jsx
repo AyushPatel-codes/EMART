@@ -1,71 +1,64 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { authApi } from '../api/services';
+import { errMsg, errFields } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { useUi } from '../context/UiContext';
+import Field from '../components/Field';
+import { homeFor } from '../utils/format';
 
-export default function Register() {
-    const { register } = useAuth();
-    const navigate = useNavigate();
-    const [form, setForm] = useState({ name: '', email: '', password: '', role: 'USER' });
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState(false);
-    const [loading, setLoading] = useState(false);
+function RegisterForm({ title, intro, fields, call, footer }) {
+  const { user, login } = useAuth();
+  const ui = useUi();
+  const nav = useNavigate();
+  const [form, setForm] = useState(() => Object.fromEntries(fields.map((f) => [f.name, ''])));
+  const [errs, setErrs] = useState({});
+  const [msg, setMsg] = useState('');
+  const [busy, setBusy] = useState(false);
+  if (user) return <Navigate to={homeFor(user.role)} replace />;
 
-    const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
-    const handleCheckbox = (e) => setForm({ ...form, role: e.target.checked ? 'ADMIN' : 'USER' });
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
-        setLoading(true);
-        try {
-            await register(form);
-            setSuccess(true);
-            setTimeout(() => navigate('/login'), 1200);
-        } catch (err) {
-            setError(err.response?.data?.message || 'Could not create account. Try a different email.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className="page">
-            <div className="form-card">
-                <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--turquoise)', textTransform: 'uppercase', fontWeight: 700 }}>New account</span>
-                <h2 style={{ margin: '8px 0 24px' }}>Create an account</h2>
-                {error && <div className="error-banner">{error}</div>}
-                {success && <div className="success-banner">Account created — redirecting to sign in…</div>}
-                <form onSubmit={handleSubmit}>
-                    <div className="field">
-                        <label>Full name</label>
-                        <input type="text" name="name" required value={form.name} onChange={handleChange} placeholder="Jordan Rivera" />
-                    </div>
-                    <div className="field">
-                        <label>Email</label>
-                        <input type="email" name="email" required value={form.email} onChange={handleChange} placeholder="you@example.com" />
-                    </div>
-                    <div className="field">
-                        <label>Password</label>
-                        <input type="password" name="password" required minLength={6} value={form.password} onChange={handleChange} placeholder="At least 6 characters" />
-                    </div>
-                    <div className="field" style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                        <input
-                            type="checkbox"
-                            id="isAdmin"
-                            checked={form.role === 'ADMIN'}
-                            onChange={handleCheckbox}
-                            style={{ width: 'auto' }}
-                        />
-                        <label htmlFor="isAdmin" style={{ marginBottom: 0, cursor: 'pointer' }}>Register as Admin</label>
-                    </div>
-                    <button className="btn btn-pay btn-block" disabled={loading}>
-                        {loading ? 'Creating…' : 'Create account'}
-                    </button>
-                </form>
-                <p style={{ marginTop: 20, fontSize: '0.85rem', color: 'var(--muted)' }}>
-                    Already have an account? <Link to="/login" style={{ color: 'var(--magenta)', fontWeight: 600 }}>Sign in</Link>
-                </p>
-            </div>
+  const submit = async (e) => {
+    e.preventDefault(); setErrs({}); setMsg(''); setBusy(true);
+    try {
+      const u = login(await call(form));
+      ui.success('Account created!');
+      nav(homeFor(u.role), { replace: true });
+    } catch (ex) { setErrs(errFields(ex)); setMsg(errMsg(ex)); setBusy(false); }
+  };
+  return (
+    <div className="auth wide page">
+      <form className="card" onSubmit={submit}>
+        <h2>{title}</h2>
+        <p className="muted">{intro}</p>
+        {msg && <div className="alert error">{msg}</div>}
+        <div className="form-grid">
+          {fields.map((f) => (
+            <Field key={f.name} label={f.label} type={f.type || 'text'} value={form[f.name]} error={errs[f.name]} required
+                   onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} autoComplete={f.auto} />
+          ))}
         </div>
-    );
+        <button className="btn btn-primary btn-block" disabled={busy}>{busy ? 'Creating…' : 'Create account'}</button>
+        <p className="muted">{footer}</p>
+      </form>
+    </div>
+  );
 }
+
+const base = [
+  { name: 'name', label: 'Full name', auto: 'name' },
+  { name: 'email', label: 'Email', type: 'email', auto: 'email' },
+  { name: 'password', label: 'Password (min 8 characters)', type: 'password', auto: 'new-password' },
+  { name: 'phone', label: 'Phone', type: 'tel', auto: 'tel' },
+];
+
+export const RegisterCustomer = () => (
+  <RegisterForm title="Create your Emart account" intro="Shop, track orders and save your favourites."
+    fields={[...base, { name: 'address', label: 'Address' }]} call={authApi.registerCustomer}
+    footer={<>Already have an account? <Link to="/login">Sign in</Link></>} />
+);
+
+export const RegisterSeller = () => (
+  <RegisterForm title="Become an Emart seller" intro="Your application is reviewed by an admin. You can start selling once it is approved."
+    fields={[...base, { name: 'storeName', label: 'Store / business name' }, { name: 'businessAddress', label: 'Business address' }]}
+    call={authApi.registerSeller} footer={<>Already a seller? <Link to="/seller/login">Sign in</Link></>} />
+);
