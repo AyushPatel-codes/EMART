@@ -1,47 +1,28 @@
 package com.Project.EMART.model;
 
-import lombok.Data;
+import jakarta.mail.Address;
+import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
-import java.util.Date;
-
-
-@Data
-@Document(collection = "users" )//tell database to save it in users collection
+/** Customers and sellers. The admin is NOT stored here (configured in application.properties). */
+@Document("users")
+@Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class User {
-    @Id
-    private String id;
-    private String username;
-    private String email;
-    private String password;
-    private String firstName;
-    private String lastName;
-    private String role;//customer, admin
+    @Id private String id;
+    private String name;
+    @Indexed(unique = true) private String email;
+    private String passwordHash;
     private String phone;
-    private String address;
-    private Date createdAt;
-    private Date updatedAt;
-    private boolean active;
-
-    public User() {
-        this.createdAt = new Date();
-        this.updatedAt = new Date();
-        this.active = true;
-    }
-
-    public User(String username, String email, String password, String firstName, String lastName, String role, String phone, String address) {
-        this.username = username;
-        this.email = email;
-        this.password = password;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.role = role;
-        this.phone = phone;
-        this.address = address;
-        this.createdAt = new Date();
-        this.updatedAt = new Date();
-        this.active = true;
-    }
-
+    @Indexed private Role role;
+    private UserStatus status;
+    private String address;          // customer
+    private String storeName;        // seller
+    private String businessAddress;  // seller
+    @Builder.Default private List<Address> addresses = new ArrayList<>();
+    private LocalDateTime createdAt;
 }
