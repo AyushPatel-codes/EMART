@@ -65,6 +65,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/seller/**").hasRole("SELLER")
                         .requestMatchers("/api/cart/**", "/api/wishlist/**", "/api/orders/**", "/api/profile/**",
                                 "/api/addresses/**", "/api/customer/**").hasRole("CUSTOMER")
+                        .requestMatchers("/api/swagger-ui/index.html").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(new JwtAuthFilter(jwtUtil, users, blacklist, adminEmail), UsernamePasswordAuthenticationFilter.class);
         return http.build();
